@@ -1,46 +1,28 @@
-let mongoose = require("mongoose");
+let express = require("express");
+let bodyParser = require("body-parser");
 
-//tell mongoose which promise library to use
-mongoose.Promise = global.Promise;
+let { mongoose } = require("./db/mongoose");
+let { Todo } = require("./models/todo");
+let { User } = require("./models/user");
 
-//connects server
-mongoose.connect("mongodb://localhost:27017/TodoApp");
+let app = express();
 
-//creates the model for mongoose to use for the To Do (Todo) documents
-let Todo = mongoose.model("Todo", {
-    text: {
-        type: String
-    },
-    completed: {
-        type: Boolean
-    },
-    completedAt: {
-        type: Number
-    }
+app.use(bodyParser.json());
+
+app.post("/todos", (req, res) => {
+    let todo = new Todo({
+        text: req.body.text,
+        completed: req.body.completed,
+        completedAt: req.body.completedAt
+    });
+
+    todo.save().then((doc) => {
+        res.send(doc);
+    }, (err) => {
+        res.status(400).send(err);
+    });
 });
 
-// LEARNING: 
-    //example of a new Todo document being created from the Todo constructor above
-let newTodo = new Todo({
-    text: "Cook dinner"
-});
-
-newTodo.save().then((result)=>{
-    console.log("Saved To Do", result)
-},(e)=> {
-    console.log("Could not save To Do item.");
-});
-
-
-//CHALLENGE: create a new To Do document that has been completed.
-let secondTodo = new Todo({
-    text: "Cook all the foods.",
-    completed: true,
-    completedAt: 10
-});
-
-secondTodo.save().then((result) => {
-    console.log("Saved To Do", result);
-}, (err) => {
-    console.log("Could not save To Do item.");
+app.listen(3000, () => {
+    console.log("Started on port 3000");
 });
