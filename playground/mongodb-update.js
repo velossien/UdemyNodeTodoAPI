@@ -8,16 +8,16 @@ MongoClient.connect("mongodb://localhost:27017/TodoApp", (err, db) => {
     }
     console.log("Connected to MongoDB Server");
 
-    //LEARNING:
-    // db.collection("Todos").findOneAndUpdate({
-    //     _id: new ObjectID("597fc375ce04ff1c71ae2953")
-    // }, {
-    //     $set:{completed:false}
-    // },{
-    //     returnOriginal: false
-    // }).then((result)=>{
-    //     console.log(result);
-    // });
+    //LEARNING: findOneAndUpdate
+    db.collection("Todos").findOneAndUpdate({
+        _id: new ObjectID("597fc375ce04ff1c71ae2953")
+    }, {
+        $set:{completed:false}
+    },{
+        returnOriginal: false
+    }).then((result)=>{
+        console.log(result);
+    });
 
     //CHALLENGES:
 
@@ -34,5 +34,5 @@ MongoClient.connect("mongodb://localhost:27017/TodoApp", (err, db) => {
             console.log(result);
         });
 
-    // db.close(); closes connection (commented out while doing )
+    // db.close(); closes connection
 });
