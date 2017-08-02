@@ -4,8 +4,17 @@ const request = require("supertest");
 const { app } = require("./../server");
 const { Todo } = require("./../models/todo");
 
+//array of dummy todos so we can test our GET todos route
+const todos = [{
+    text: "First test todo"
+}, {
+    text: "Second test todo"
+}]
+
 beforeEach((done) => { //before each test case - do this.
-    Todo.remove({}).then(() => done()); //empties database
+    Todo.remove({}).then(() => {
+        return Todo.insertMany(todos);  //removes items from database and then tacks on our test array
+    }).then(() => done());
 });
 
 //LEARNING
@@ -26,7 +35,7 @@ describe("POST /todos", () => {
                     return done(err); //returning this will stop the function exectution so the rest isn't run
                 };
 
-                Todo.find().then((todos) => { //make a request to the database fetching all todos
+                Todo.find({ text }).then((todos) => { //make a request to the database fetching all todos with "text" in them (so we aren't thrown off by our dummy array)
                     expect(todos.length).toBe(1);
                     expect(todos[0].text).toBe(text);
                     done(); //wraps up test case
@@ -47,9 +56,21 @@ describe("POST /todos", () => {
                     return done(err);
                 }
                 Todo.find().then((todos) => {
-                    expect(todos.length).toBe(0);
+                    expect(todos.length).toBe(2); //this will include the two dummy documents passed in
                     done();
                 }).catch((error) => done(error));
             })
+    });
+});
+
+describe("GET /todos", () => {
+    it("should get all todos", (done) => {
+        request(app)
+            .get("/todos")
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todos.length).toBe(2);
+            })
+            .end(done);
     });
 });
