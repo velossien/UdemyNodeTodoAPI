@@ -9,7 +9,7 @@
     "test-watch": "nodemon --exec 'npm test'"
   },
   "engines": {
-    "node": "8.1.4" //we add this in so where we are deploying to knows which version we are using
+    "node": "8.1.4" 
   },
   "author": "",
   "license": "ISC",
