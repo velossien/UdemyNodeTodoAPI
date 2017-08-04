@@ -1,5 +1,6 @@
-let express = require("express");
-let bodyParser = require("body-parser");
+const _ = require("lodash");
+const express = require("express");
+const bodyParser = require("body-parser");
 const { ObjectID } = require("mongodb");
 
 let { mongoose } = require("./db/mongoose");
@@ -63,7 +64,7 @@ app.get("/todos/:id", (req, res) => {
 })
 
 // CHALLENGE //
-//DELETES DOCUMENT FROM COLLECTION BY ID
+//DELETE: DELETES DOCUMENT FROM COLLECTION BY ID
 app.delete("/todos/:id", (req, res) => {
 
     // get the id
@@ -81,10 +82,42 @@ app.delete("/todos/:id", (req, res) => {
         }
 
         res.send({ todo });
-    }).catch((e)=>{
+    }).catch((e) => {
         res.status(400).send();
     });
 });
+
+//PATCH: Update todo items
+app.patch("/todos/:id", (req, res) => {
+
+    let id = req.params.id;
+    var body = _.pick(req.body, ["text", "completed"]); //allows you to pick which properties you want to be able to update - keeps users from updating ids, etc.
+
+    //validates Id
+    if (!ObjectID.isValid(id)) {
+        return res.status(404).send();
+    };
+
+    //changes completedAt based on if todo is complete or not
+    if (_.isBoolean(body.completed) && body.completed) { //if it's a boolean and it's true
+        body.completedAt = new Date().getTime();
+    } else {
+        body.completed = false;
+        body.completedAt = null;
+    }
+
+    //finds the todo by it's Id and updates it with a new body. Then send it back.
+    Todo.findByIdAndUpdate(id, { $set: body }, { new: true }).then((todo) => {
+        if (!todo) {
+            return res.status(404).send();
+        }
+
+        res.send({ todo });
+    }).catch((e) => {
+        res.status(400).send();
+    });
+});
+
 
 app.listen(port, () => {
     console.log(`Started on port ${port}`);
