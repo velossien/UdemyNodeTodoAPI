@@ -8,10 +8,14 @@ const { Todo } = require("./../models/todo");
 //array of dummy todos so we can test our GET todos route
 const todos = [{
     _id: new ObjectID(),
-    text: "First test todo"
+    text: "First test todo",
+    completed: false,
+    completedAt: null
 }, {
     _id: new ObjectID(),
-    text: "Second test todo"
+    text: "Second test todo",
+    completed: true,
+    completedAt: 333
 }]
 
 beforeEach((done) => { //before each test case - do this.
@@ -89,7 +93,7 @@ describe("GET /todos/:id", () => {
             .end(done);
     });
 
-    it("should return 404 if todo not found",(done)=>{
+    it("should return 404 if todo not found", (done) => {
         let testID = new ObjectID();
 
         request(app)
@@ -99,7 +103,7 @@ describe("GET /todos/:id", () => {
         //make sure you get a 4040 back if make new object id that isn't in the array
     });
 
-    it("should return 404 for non-object ids",(done)=>{
+    it("should return 404 for non-object ids", (done) => {
         // /todos/123 passed in - will fail
         request(app)
             .get("/todos/123")
@@ -108,15 +112,15 @@ describe("GET /todos/:id", () => {
     });
 });
 
-describe("DELETE /todos/:id",()=>{
+describe("DELETE /todos/:id", () => {
 
     let deleteId = todos[0]._id.toHexString();
 
-    it("should delete todo document based on id",(done)=>{
+    it("should delete todo document based on id", (done) => {
         request(app)
             .delete(`/todos/${deleteId}`)
             .expect(200)
-            .expect((res)=>{
+            .expect((res) => {
                 expect(res.body.todo._id).toBe(deleteId);
             })
             .end((err, res) => {
@@ -124,14 +128,14 @@ describe("DELETE /todos/:id",()=>{
                     return done(err);
                 };
 
-                Todo.findById(deleteId).then((todo) => { 
+                Todo.findById(deleteId).then((todo) => {
                     expect(todo).toNotExist;
                     done();
-                }).catch((error) => done(error)); 
+                }).catch((error) => done(error));
             })
     });
 
-    it("should return 404 if Todo is not found",(done)=>{
+    it("should return 404 if Todo is not found", (done) => {
         let deleteId = new ObjectID();
 
         request(app)
@@ -140,13 +144,79 @@ describe("DELETE /todos/:id",()=>{
             .end(done);
     });
 
-    it("should return 404 if ID is not valid",(done)=>{
+    it("should return 404 if ID is not valid", (done) => {
         request(app)
             .delete("/todos/123")
             .expect(404)
             .end(done);
     });
-
-    
-
 });
+
+describe("PATCH /todos/:id", () => {
+
+
+    it("should update todo document based on id", (done) => {
+
+        let id = todos[0]._id.toHexString();
+        let text = "Update todo.";
+
+        request(app)
+            .patch(`/todos/${id}`)
+            .send({
+                completed: true,
+                text
+            })
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todo._id).toBe(id)
+            })
+            .end((err, res) => {
+                if (err) {
+                    return done(err);
+                };
+
+                Todo.findById(id).then((todo) => {
+                    expect(todo.text).toBe(text);
+                    expect(todo.completed).toBe(true);
+                    expect(todo.completedAt).toBeA("number");
+                    done();
+                }).catch((error) => done(error));
+            })
+    });
+
+    it("should clear completedAt when todo is not completed", (done) => {
+        let id = todos[1]._id.toHexString();
+        let text = "Update todo!!";
+
+        request(app)
+            .patch(`/todos/${id}`)
+            .send({
+                completed: false,
+                text
+            })
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todo._id).toBe(id);
+                expect(res.body.todo.text).toBe(text);
+                expect(res.body.todo.completed).toBe(false);
+                expect(res.body.todo.completedAt).toNotExist();
+            })
+            .end(done);
+    });
+
+    it("should return 404 if todo is not found", (done) => {
+        let newId = new ObjectID();
+        request(app)
+            .patch(`/todos/${newId}`)
+            .expect(404)
+            .end(done);
+    });
+
+    it("should return 404 if ID is not valid", (done) => {
+        request(app)
+            .patch("/todos/123")
+            .expect(404)
+            .end(done)
+    });
+
+})
