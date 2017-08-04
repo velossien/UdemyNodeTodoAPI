@@ -1,3 +1,5 @@
+require("./config/config");
+
 const _ = require("lodash");
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -8,7 +10,7 @@ let { Todo } = require("./models/todo");
 let { User } = require("./models/user");
 
 let app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT;
 
 //configure middleware (using bodyParser to allow us to send JSON to our express app)
 app.use(bodyParser.json());
