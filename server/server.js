@@ -93,7 +93,7 @@ app.delete("/todos/:id", (req, res) => {
 app.patch("/todos/:id", (req, res) => {
 
     let id = req.params.id;
-    var body = _.pick(req.body, ["text", "completed"]); //allows you to pick which properties you want to be able to update - keeps users from updating ids, etc.
+    let body = _.pick(req.body, ["text", "completed"]); //allows you to pick which properties you want to be able to update - keeps users from updating ids, etc.
 
     //validates Id
     if (!ObjectID.isValid(id)) {
@@ -117,6 +117,22 @@ app.patch("/todos/:id", (req, res) => {
         res.send({ todo });
     }).catch((e) => {
         res.status(400).send();
+    });
+});
+
+//CHALLENGE: POST /users
+app.post("/users", (req, res) => {
+
+    let body = _.pick(req.body, ["name", "age", "email", "password"]);
+    
+    let user = new User(body);
+
+    user.save().then(() => {
+        return user.generateAuthToken();
+    }).then((token)=>{
+        res.header("x-auth",token).send(user);
+    }).catch((err)=>{
+        res.status(400).send(err);
     });
 });
 
