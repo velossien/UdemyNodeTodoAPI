@@ -120,6 +120,8 @@ app.patch("/todos/:id", (req, res) => {
     });
 });
 
+/* ----------------------USERS---------------------------*/
+
 //CHALLENGE: POST /users
 app.post("/users", (req, res) => {
 
@@ -127,10 +129,18 @@ app.post("/users", (req, res) => {
     
     let user = new User(body);
 
-    user.save().then(() => {
-        return user.generateAuthToken();
-    }).then((token)=>{
-        res.header("x-auth",token).send(user);
+    /* Explanation of below:
+        1.) First the user is saved and this creates a new user. We will find out before this point if the email was valid, etc.
+        2.) Then the user is sent as a result to ".then" which sends it through to be used in "user.generateAuthToken"
+        3.) user.generateAuthToken creates a access property and a custom hashed token and pushes it to user's empty tokens array.
+        4.) the user is saved once again and the promise is returned that will return the value of "token" so that more can be chained on
+        5.) back in server.js,  er now have user and token.  .then sends the token to res.header which sends the token back as an HTTP response header and then user is sent back as well.
+    */
+
+    user.save().then((/*user*/) => { // you can technically leave out "user" as the parameter for .then because it is the same user defined above
+        return user.generateAuthToken(); // return it because we know we are expecting another chaining promise
+    }).then((token)=>{ // now we have the user and the token!
+        res.header("x-auth",token).send(user); // This sends the token back as an HTTP response header.  ".header" takes two parameters - header name (key), value you want header to be set to.  Also, "x-" is a custom header.
     }).catch((err)=>{
         res.status(400).send(err);
     });
