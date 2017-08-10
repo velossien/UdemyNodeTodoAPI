@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const validator = require("validator");
 const jwt = require("jsonwebtoken");
 const _ = require("lodash");
+const bcrypt = require("bcryptjs");
 
 //switched to using a Schema, so you could add methods on as needed
 let UserSchema = new mongoose.Schema({
@@ -85,12 +86,27 @@ UserSchema.statics.findByToken = function (token) {  //statics is an object like
         --> an access property nested inside their tokens array equals "auth"
         * mongoDB allows us to use the syntax below instead of having to deal with nesting things
     */
-    return User.findOne({ 
+    return User.findOne({
         "_id": decoded._id,
         "tokens.token": token,
         "tokens.access": "auth"
     });
 }
+UserSchema.pre("save", function (next) {
+    let user = this;
+
+    if (user.isModified("password")) { //returns true if "password" is modified, false if not
+        bcrypt.genSalt(10, (err, salt) => {
+            bcrypt.hash(user.password, salt, (err, hash) => {
+                user.password = hash;
+                next();
+            });
+        });
+    } else {
+        next();
+    }
+});
+
 let User = mongoose.model("User", UserSchema);
 
 module.exports = { User };
