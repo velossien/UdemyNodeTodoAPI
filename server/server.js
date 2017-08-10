@@ -8,6 +8,7 @@ const { ObjectID } = require("mongodb");
 let { mongoose } = require("./db/mongoose");
 let { Todo } = require("./models/todo");
 let { User } = require("./models/user");
+let { authenticate } = require("./middleware/authenticate");
 
 let app = express();
 const port = process.env.PORT;
@@ -126,7 +127,7 @@ app.patch("/todos/:id", (req, res) => {
 app.post("/users", (req, res) => {
 
     let body = _.pick(req.body, ["name", "age", "email", "password"]);
-    
+
     let user = new User(body);
 
     /* Explanation of below:
@@ -139,13 +140,16 @@ app.post("/users", (req, res) => {
 
     user.save().then((/*user*/) => { // you can technically leave out "user" as the parameter for .then because it is the same user defined above
         return user.generateAuthToken(); // return it because we know we are expecting another chaining promise
-    }).then((token)=>{ // now we have the user and the token!
-        res.header("x-auth",token).send(user); // This sends the token back as an HTTP response header.  ".header" takes two parameters - header name (key), value you want header to be set to.  Also, "x-" is a custom header.
-    }).catch((err)=>{
+    }).then((token) => { // now we have the user and the token!
+        res.header("x-auth", token).send(user); // This sends the token back as an HTTP response header.  ".header" takes two parameters - header name (key), value you want header to be set to.  Also, "x-" is a custom header.
+    }).catch((err) => {
         res.status(400).send(err);
     });
 });
 
+app.get("/users/me", authenticate, (req, res) => { //authenticate is a middleware (code was pulled out so it could be reused). We are using it this way instead of app.use because we don't want it global, we only want it to be used in this route
+   res.send(req.user);
+});
 
 app.listen(port, () => {
     console.log(`Started on port ${port}`);
