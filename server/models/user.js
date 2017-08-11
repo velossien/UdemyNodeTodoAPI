@@ -8,7 +8,7 @@ const bcrypt = require("bcryptjs");
 let UserSchema = new mongoose.Schema({
     name: {
         type: String,
-        required: true,
+        required: false,
         minlength: 1
     },
     age: {
@@ -91,8 +91,9 @@ UserSchema.statics.findByToken = function (token) {  //statics is an object like
         "tokens.token": token,
         "tokens.access": "auth"
     });
-}
-UserSchema.pre("save", function (next) {
+};
+
+UserSchema.pre("save", function (next) {//middleware that occurs before "save"
     let user = this;
 
     if (user.isModified("password")) { //returns true if "password" is modified, false if not
