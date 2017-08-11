@@ -93,6 +93,35 @@ UserSchema.statics.findByToken = function (token) {  //statics is an object like
     });
 };
 
+UserSchema.statics.findByCredentials = function (email, password) {
+    let User = this;
+    return User.findOne({ email }).then((user) => {
+        if (!user) {
+            return reject();
+        }
+
+        //made a promise here as at the time of course - bcryptjs did not allow promises
+        // return new Promise((resolve, reject) => {
+        //     bcrypt.compare(password, user.password, (err, res) => {
+        //         if (res) {
+        //             resolve(user); //have to put in user as it will let us use the user back in server.js
+        //         } else {
+        //             reject();
+        //         };
+        //     });
+        // });
+
+        return bcrypt.compare(password,user.password).then((res)=>{
+            if (res){
+                return user;
+            }
+            else {
+                return Promise.reject();
+            }
+        });
+    });
+};
+
 UserSchema.pre("save", function (next) {//middleware that occurs before "save"
     let user = this;
 
