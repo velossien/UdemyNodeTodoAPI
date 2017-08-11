@@ -64,6 +64,17 @@ UserSchema.methods.generateAuthToken = function () { //UserSchema is an object s
     });
 };
 
+UserSchema.methods.removeToken = function(tokenToRemove){
+    let user = this;
+    return user.update({
+        $pull: { //$pull lets you remove items from an array that match certain criteria
+            tokens: {
+                token: tokenToRemove
+            }
+        }
+    });
+};
+
 UserSchema.statics.findByToken = function (token) {  //statics is an object likes methods (above), but everything you add onto it turns into a model method instead of an instance method
     let User = this; //model methods get called with the model (User instead of user) as the .this binding
     let decoded; //stores the decoded jwt values
