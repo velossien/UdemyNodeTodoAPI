@@ -18,14 +18,14 @@ const port = process.env.PORT;
 app.use(bodyParser.json());
 
 //POST - ADDS TODO DOCUMENT TO COLLECTION
-app.post("/todos", (req, res) => {
+app.post("/todos", authenticate, (req, res) => { //authenticate is a middleware that will make this route private
 
     //create To Do document from the request body (uses Mongoose model from other 
     let todo = new Todo({
         text: req.body.text,
         completed: req.body.completed,
-        completedAt: req.body.completedAt
-
+        completedAt: req.body.completedAt,
+        _creator: req.user._id
     });
 
     //save model to database
@@ -38,8 +38,10 @@ app.post("/todos", (req, res) => {
 
 
 //GET - FETCHES ALL DOCUMENTS IN THE TODO COLLECTION
-app.get("/todos", (req, res) => {
-    Todo.find().then((todos) => {
+app.get("/todos", authenticate, (req, res) => {
+    Todo.find({
+        _creator: req.user._id //only finds todos that the user created
+    }).then((todos) => {
         res.send({ todos }); //better to send back an object instead of array so you can other properties in later such as custom status codes, etc.  Also, this is using es6 way of doing things, so instead of writing todos = todos can just write todos.
     }, (e) => {
         res.status(400).send(e);
@@ -48,7 +50,7 @@ app.get("/todos", (req, res) => {
 
 // CHALLENGE //
 //GET - FETCHES DOCUMENT WITH A SPECIFIC ID
-app.get("/todos/:id", (req, res) => {
+app.get("/todos/:id", authenticate, (req, res) => {
     let id = req.params.id;
 
     //validate the id - send back empy block
@@ -57,7 +59,10 @@ app.get("/todos/:id", (req, res) => {
     };
 
     //use findById to find the ID and send back error statuses if needed
-    Todo.findById(id).then((todo) => {
+    Todo.findOne({
+        _id: id,
+        _creator: req.user._id
+    }).then((todo) => {
         if (!todo) {
             return res.status(404).send();
         }
@@ -69,7 +74,7 @@ app.get("/todos/:id", (req, res) => {
 
 // CHALLENGE //
 //DELETE: DELETES DOCUMENT FROM COLLECTION BY ID
-app.delete("/todos/:id", (req, res) => {
+app.delete("/todos/:id", authenticate, (req, res) => {
 
     // get the id
     let id = req.params.id;
@@ -79,8 +84,11 @@ app.delete("/todos/:id", (req, res) => {
         return res.status(404).send();
     };
 
-    //remove todo by id
-    Todo.findByIdAndRemove(id).then((todo) => {
+    //remove one todo by id and creator
+    Todo.findOneAndRemove({
+        _id: id,
+        _creator: req.user._id
+    }).then((todo) => {
         if (!todo) {
             return res.status(404).send();
         }
@@ -92,7 +100,7 @@ app.delete("/todos/:id", (req, res) => {
 });
 
 //PATCH: Update todo items
-app.patch("/todos/:id", (req, res) => {
+app.patch("/todos/:id", authenticate, (req, res) => {
 
     let id = req.params.id;
     let body = _.pick(req.body, ["text", "completed"]); //allows you to pick which properties you want to be able to update - keeps users from updating ids, etc.
@@ -111,15 +119,18 @@ app.patch("/todos/:id", (req, res) => {
     }
 
     //finds the todo by it's Id and updates it with a new body. Then send it back.
-    Todo.findByIdAndUpdate(id, { $set: body }, { new: true }).then((todo) => {
-        if (!todo) {
-            return res.status(404).send();
-        }
+    Todo.findOneAndUpdate({
+        _id: id,
+        _creator: req.user._id
+    }, { $set: body }, { new: true }).then((todo) => {
+            if (!todo) {
+                return res.status(404).send();
+            }
 
-        res.send({ todo });
-    }).catch((e) => {
-        res.status(400).send();
-    });
+            res.send({ todo });
+        }).catch((e) => {
+            res.status(400).send();
+        });
 });
 
 /* ----------------------USERS---------------------------*/
@@ -165,10 +176,10 @@ app.post("/users/login", (req, res) => {
     });
 });
 
-app.delete("/users/me/token", authenticate,(req,res)=>{
-    req.user.removeToken(req.token).then(()=>{
+app.delete("/users/me/token", authenticate, (req, res) => {
+    req.user.removeToken(req.token).then(() => {
         res.status(200).send();
-    },()=>{
+    }, () => {
         res.status(400).send();
     })
 })

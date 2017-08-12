@@ -12,12 +12,15 @@ const todos = [{
     _id: new ObjectID(),
     text: "First test todo",
     completed: false,
-    completedAt: null
+    completedAt: null,
+    _creator: userOneId,
 }, {
     _id: new ObjectID(),
     text: "Second test todo",
+    _creator: userOneId,
     completed: true,
-    completedAt: 333
+    completedAt: 333,
+    _creator: userTwoId,
 }]
 
 const users = [{
@@ -36,6 +39,10 @@ const users = [{
     _id: userTwoId,
     email: "chris.grimm@gmail.com",
     password: "userTwoPass",
+    tokens: [{
+        access: "auth",
+        token: jwt.sign({ _id: userTwoId, access: "auth" }, "secretsalt").toString()
+    }]
 }];
 
 const populateTodos = (done) => { //before each test case - do this.
