@@ -55,7 +55,7 @@ UserSchema.methods.toJSON = function () {
 UserSchema.methods.generateAuthToken = function () { //UserSchema is an object so we can add an instance method using .methods.
     let user = this;
     let access = "auth";
-    let token = jwt.sign({ _id: user._id.toHexString(), access }, "secretsalt").toString();
+    let token = jwt.sign({ _id: user._id.toHexString(), access }, process.env.JWT_SECRET).toString(); //process.env.JWT_SECRET is the salt from config.json
 
     user.tokens.push({ access, token }); //pushes the token to the user.tokens array (which is empty by default)
     return user.save().then(() => {
@@ -80,7 +80,7 @@ UserSchema.statics.findByToken = function (token) {  //statics is an object like
     let decoded; //stores the decoded jwt values
 
     try {
-        decoded = jwt.verify(token, "secretsalt");
+        decoded = jwt.verify(token, process.env.JWT_SECRET);
     } catch (e) {
         return Promise.reject(); //return a promise so the chain continues back in server.js
     };
