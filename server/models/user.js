@@ -133,6 +133,7 @@ UserSchema.statics.findByCredentials = function (email, password) {
     });
 };
 
+//middleware that hashes password before saving the user document into the databse - is called before any save()
 UserSchema.pre("save", function (next) {//middleware that occurs before "save"
     let user = this;
 
